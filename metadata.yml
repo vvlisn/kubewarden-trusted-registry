@@ -22,3 +22,4 @@ annotations:
   io.kubewarden.policy.url: "https://github.com/yourorg/policy-name"
   io.kubewarden.policy.resources: "Pod"
   io.kubewarden.policy.keywords: "pod, image, trusted registry"
+  io.artifacthub:displayName: Trusted Registry
