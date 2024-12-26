@@ -14,7 +14,6 @@ import (
 const httpBadRequestStatusCode = 400
 
 func validate(payload []byte) ([]byte, error) {
-
 	validationRequest, err := parseValidationRequest(payload)
 	if err != nil {
 		return kubewarden.RejectRequest(
@@ -43,9 +42,9 @@ func validate(payload []byte) ([]byte, error) {
 		}
 	}
 
-	if err := validateContainers(containers, settings.TrustedRegistries); err != nil {
+	if validationErr := validateContainers(containers, settings.TrustedRegistries); validationErr != nil {
 		return kubewarden.RejectRequest(
-			kubewarden.Message(err.Error()),
+			kubewarden.Message(validationErr.Error()),
 			kubewarden.NoCode)
 	}
 
@@ -56,9 +55,9 @@ func validate(payload []byte) ([]byte, error) {
 		}
 	}
 
-	if err := validateContainers(initContainers, settings.TrustedRegistries); err != nil {
+	if validationErr := validateContainers(initContainers, settings.TrustedRegistries); validationErr != nil {
 		return kubewarden.RejectRequest(
-			kubewarden.Message(err.Error()),
+			kubewarden.Message(validationErr.Error()),
 			kubewarden.NoCode)
 	}
 
