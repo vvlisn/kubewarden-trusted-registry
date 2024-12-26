@@ -12,7 +12,7 @@
 
 ```json
 {
-  "trusted_registries": ["docker-dev.vestack.sbuxcf.net", "docker-stg.vestack.sbuxcf.net"]
+  "trusted_registries": ["docker-dev.xxx.xx.net", "docker-stg.xxx.xxx.net"]
 }
 ```
 

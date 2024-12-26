@@ -44,7 +44,7 @@
     "spec": {
       "containers": [
         {
-          "image": "docker-dev.vestack.sbuxcf.net/nginx:latest",
+          "image": "docker.io/nginx:latest",
           "imagePullPolicy": "Always",
           "name": "nginx",
           "ports": [
@@ -74,7 +74,7 @@
             "-c",
             "echo Hello from BusyBox! > /data/index.html && sleep 3600"
           ],
-          "image": "registry-stg.vestack.sbuxcf.net/busybox:1.28",
+          "image": "quay.io/busybox:1.28",
           "imagePullPolicy": "IfNotPresent",
           "name": "busybox",
           "resources": {},

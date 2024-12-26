@@ -45,7 +45,7 @@
       "containers": [
         {
           "name": "pause",
-          "image": "registry-dev.vestack.sbuxcf.net/pause",
+          "image": "quay.io/pause",
           "securityContext": {
             "privileged": true
           }

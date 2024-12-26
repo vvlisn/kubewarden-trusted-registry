@@ -44,7 +44,7 @@
     "spec": {
       "containers": [
         {
-          "image": "registry-dev.vestack.sbuxcf.net:nginx/latest",
+          "image": "quay.io:nginx/latest",
           "imagePullPolicy": "Always",
           "name": "nginx",
           "ports": [

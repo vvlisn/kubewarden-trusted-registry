@@ -44,7 +44,7 @@
     "spec": {
       "containers": [
         {
-          "image": "docker-dev.vestack.sbuxcf.net:nginx/latest",
+          "image": "docker.io:nginx/latest",
           "imagePullPolicy": "Always",
           "name": "nginx",
           "ports": [

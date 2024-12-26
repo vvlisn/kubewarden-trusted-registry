@@ -1,7 +1,7 @@
 @test "accept when image is from a trusted registry" {
   # Run the policy with settings specifying trusted registries
   run kwctl run -r test_data/pod-trusted.json \
-    --settings-json '{"trusted_registries": ["registry-dev.vestack.sbuxcf.net", "registry-stg.vestack.sbuxcf.net"]}' \
+    --settings-json '{"trusted_registries": ["quay.io", "gcr.io"]}' \
     policy.wasm
 
   # Print the output if any check fails
@@ -15,7 +15,7 @@
 @test "reject when image is from an untrusted registry" {
   # Run the policy with settings specifying trusted registries
   run kwctl run -r test_data/pod-untrusted.json \
-    --settings-json '{"trusted_registries": ["registry-dev.vestack.sbuxcf.net", "registry-stg.vestack.sbuxcf.net"]}' \
+    --settings-json '{"trusted_registries": ["quay.io", "gcr.io"]}' \
     policy.wasm
 
   # Print the output if any check fails
@@ -30,7 +30,7 @@
 @test "accept when image is from one of multiple trusted registries" {
   # Run the policy with multiple trusted registries
   run kwctl run -r test_data/pod_multiple_images.json \
-    --settings-json '{"trusted_registries": ["registry-dev.vestack.sbuxcf.net", "registry-stg.vestack.sbuxcf.net", "registry-prod.vestack.sbuxcf.net"]}' \
+    --settings-json '{"trusted_registries": ["quay.io", "gcr.io"]}' \
     policy.wasm
 
   # Print the output if any check fails
@@ -44,7 +44,7 @@
 @test "reject when any container image is from an untrusted registry" {
   # Run the policy with a pod that has multiple containers, one of which uses an untrusted registry
   run kwctl run -r test_data/pod_multiple_containers_invalid.json \
-    --settings-json '{"trusted_registries": ["registry-dev.vestack.sbuxcf.net", "registry-stg.vestack.sbuxcf.net", "registry-prod.vestack.sbuxcf.net"]}' \
+    --settings-json '{"trusted_registries": ["quay.io", "gcr.io"]}' \
     policy.wasm
 
   # Print the output if any check fails
