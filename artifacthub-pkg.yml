@@ -4,7 +4,7 @@
 #
 # This config can be saved to its default location with:
 #   kwctl scaffold artifacthub > artifacthub-pkg.yml 
-version: v0.1.0
+version: v0.1.1
 name: trusted registry
 displayName: Trusted Registry
 createdAt: 2024-12-26T06:29:59.872644Z
@@ -13,24 +13,24 @@ license: Apache-2.0
 homeURL: https://github.com/vvhuang-ll/kubewarden-trusted-registry
 containersImages:
 - name: policy
-  image: ghcr.io/vvhuang-ll/policies/kubewarden-trusted-registry:v0.1.0
+  image: ghcr.io/vvhuang-ll/policies/kubewarden-trusted-registry:v0.1.1
 keywords:
 - pod
 - image
 - trusted registry
 links:
 - name: policy
-  url: https://github.com/vvhuang-ll/kubewarden-trusted-registry/releases/download/v0.1.0/policy.wasm
+  url: https://github.com/vvhuang-ll/kubewarden-trusted-registry/releases/download/v0.1.1/policy.wasm
 - name: source
   url: https://github.com/vvhuang-ll/kubewarden-trusted-registry
 install: |
   The policy can be obtained using [`kwctl`](https://github.com/kubewarden/kwctl):
   ```console
-  kwctl pull ghcr.io/vvhuang-ll/policies/kubewarden-trusted-registry:v0.1.0
+  kwctl pull ghcr.io/vvhuang-ll/policies/kubewarden-trusted-registry:v0.1.1
   ```
   Then, generate the policy manifest and tune it to your liking. For example:
   ```console
-  kwctl scaffold manifest -t ClusterAdmissionPolicy registry://ghcr.io/vvhuang-ll/policies/kubewarden-trusted-registry:v0.1.0
+  kwctl scaffold manifest -t ClusterAdmissionPolicy registry://ghcr.io/vvhuang-ll/policies/kubewarden-trusted-registry:v0.1.1
   ```
 maintainers:
 - name: Kubewarden developers
