@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	mapset "github.com/deckarep/golang-set/v2"
@@ -40,7 +41,7 @@ func NewSettingsFromValidationReq(validationReq *kubewarden_protocol.ValidationR
 
 func (s *Settings) Valid() (bool, error) {
 	if s.TrustedRegistries.Cardinality() == 0 {
-		return false, fmt.Errorf("No trusted registries provided")
+		return false, errors.New("No trusted registries provided")
 	}
 
 	return true, nil
