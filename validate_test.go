@@ -119,8 +119,8 @@ func TestIsImageTrusted(t *testing.T) {
 		}
 
 		var response kubewarden_protocol.ValidationResponse
-		if err := json.Unmarshal(responsePayload, &response); err != nil {
-			t.Errorf("Unexpected error: %+v", err)
+		if unmarshalErr := json.Unmarshal(responsePayload, &response); unmarshalErr != nil {
+			t.Errorf("Unexpected error: %+v", unmarshalErr)
 		}
 
 		if testCase.expectedIsValid && !response.Accepted {
