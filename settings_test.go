@@ -10,19 +10,19 @@ import (
 func TestParsingSettingsWithNoValueProvided(t *testing.T) {
 	rawSettings := []byte(`{}`)
 	settings := &Settings{}
-	if err := json.Unmarshal(rawSettings, settings); err != nil {
-		t.Errorf("Unexpected error %+v", err)
+	if unmarshalErr := json.Unmarshal(rawSettings, settings); unmarshalErr != nil {
+		t.Errorf("Unexpected error %+v", unmarshalErr)
 	}
 
 	if settings.TrustedRegistries.Cardinality() != 0 {
 		t.Errorf("Expected TrustedRegistries to be empty")
 	}
 
-	valid, err := settings.Valid()
+	valid, validationErr := settings.Valid()
 	if valid {
 		t.Errorf("Settings are reported as valid when no trusted registries are provided")
 	}
-	if err == nil {
+	if validationErr == nil {
 		t.Errorf("Expected an error when no trusted registries are provided")
 	}
 }
@@ -30,27 +30,27 @@ func TestParsingSettingsWithNoValueProvided(t *testing.T) {
 func TestParsingSettingsWithValidTrustedRegistries(t *testing.T) {
 	rawSettings := []byte(`{"trusted_registries": ["quay.io", "docker.io/library"]}`)
 	settings := &Settings{}
-	if err := json.Unmarshal(rawSettings, settings); err != nil {
-		t.Errorf("Unexpected error %+v", err)
+	if unmarshalErr := json.Unmarshal(rawSettings, settings); unmarshalErr != nil {
+		t.Errorf("Unexpected error %+v", unmarshalErr)
 	}
 
 	if settings.TrustedRegistries.Cardinality() != 2 {
 		t.Errorf("Expected TrustedRegistries to have 2 elements, got %d", settings.TrustedRegistries.Cardinality())
 	}
 
-	valid, err := settings.Valid()
+	valid, validationErr := settings.Valid()
 	if !valid {
 		t.Errorf("Settings are reported as not valid")
 	}
-	if err != nil {
-		t.Errorf("Unexpected error %+v", err)
+	if validationErr != nil {
+		t.Errorf("Unexpected error %+v", validationErr)
 	}
 }
 
 func TestParsingSettingsWithInvalidJSON(t *testing.T) {
 	rawSettings := []byte(`{"trusted_registries": "not an array"}`)
 	settings := &Settings{}
-	if err := json.Unmarshal(rawSettings, settings); err == nil {
+	if unmarshalErr := json.Unmarshal(rawSettings, settings); unmarshalErr == nil {
 		t.Errorf("Expected an error for invalid JSON")
 	}
 }
@@ -65,9 +65,12 @@ func TestValidMethod(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		valid, _ := test.settings.Valid()
+		valid, validationErr := test.settings.Valid()
 		if valid != test.expected {
 			t.Errorf("Expected Valid() to be %v, got %v", test.expected, valid)
+		}
+		if validationErr != nil && test.expected {
+			t.Errorf("Unexpected error %+v", validationErr)
 		}
 	}
 }
