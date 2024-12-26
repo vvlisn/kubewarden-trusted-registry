@@ -41,7 +41,7 @@ func NewSettingsFromValidationReq(validationReq *kubewarden_protocol.ValidationR
 
 func (s *Settings) Valid() (bool, error) {
 	if s.TrustedRegistries.Cardinality() == 0 {
-		return false, errors.New("No trusted registries provided")
+		return false, errors.New("no trusted registries provided")
 	}
 
 	return true, nil
