@@ -14,85 +14,94 @@ import (
 const httpBadRequestStatusCode = 400
 
 func validate(payload []byte) ([]byte, error) {
-	// Create a ValidationRequest instance from the incoming payload
-	validationRequest := kubewarden_protocol.ValidationRequest{}
-	err := json.Unmarshal(payload, &validationRequest)
+	// 解析 ValidationRequest
+	validationRequest, err := parseValidationRequest(payload)
 	if err != nil {
-		logger.Error(err.Error())
 		return kubewarden.RejectRequest(
 			kubewarden.Message(err.Error()),
 			kubewarden.Code(httpBadRequestStatusCode))
 	}
 
-	// Create a Settings instance from the ValidationRequest object
-	settings, err := NewSettingsFromValidationReq(&validationRequest)
+	// 从 ValidationRequest 获取配置
+	settings, err := NewSettingsFromValidationReq(validationRequest)
 	if err != nil {
-		logger.Error(err.Error())
 		return kubewarden.RejectRequest(
 			kubewarden.Message(err.Error()),
 			kubewarden.Code(httpBadRequestStatusCode))
 	}
 
-	// Access the **raw** JSON that describes the object
-	podJSON := validationRequest.Request.Object
-
-	// Debugging: Print raw JSON before unmarshalling
-	logger.Debug(fmt.Sprintf("Raw pod JSON: %s", podJSON))
-
-	// Try to create a Pod instance using the RAW JSON we got from the
-	// ValidationRequest.
-	pod := &corev1.Pod{}
-	if err = json.Unmarshal([]byte(podJSON), pod); err != nil {
-		logger.Error(fmt.Sprintf("Cannot decode Pod object: %s", err.Error()))
+	// 解析 Pod 对象
+	pod, err := parsePod(validationRequest.Request.Object)
+	if err != nil {
 		return kubewarden.RejectRequest(
-			kubewarden.Message(
-				fmt.Sprintf("Cannot decode Pod object: %s", err.Error())),
+			kubewarden.Message(err.Error()),
 			kubewarden.Code(httpBadRequestStatusCode))
 	}
-
-	// Debugging: Print the pod spec and trusted registries
-	logger.Debug(fmt.Sprintf("Pod spec: %+v", pod.Spec))
-	logger.Debug(fmt.Sprintf("Trusted registries: %v", settings.TrustedRegistries.ToSlice()))
-
-	// Validate each container image in the Pod
-	if pod.Spec != nil && pod.Spec.Containers != nil {
+	// 将 []*corev1.Container 转换为 []corev1.Container
+	var containers []corev1.Container
+	if pod.Spec.Containers != nil {
 		for _, container := range pod.Spec.Containers {
-			logger.Debug(fmt.Sprintf("Checking container image: %s", container.Image))
-			if !isImageTrusted(container.Image, settings.TrustedRegistries) {
-				logger.Error(fmt.Sprintf("Container image %s is not from a trusted registry", container.Image))
-				return kubewarden.RejectRequest(
-					kubewarden.Message(
-						fmt.Sprintf("The image '%s' is not from a trusted registry", container.Image)),
-					kubewarden.NoCode)
-			} else {
-				logger.Debug(fmt.Sprintf("Container image %s is from a trusted registry", container.Image))
-			}
+			containers = append(containers, *container)
 		}
-	} else {
-		logger.Info("No containers found in the Pod")
 	}
-
-	// Optionally, validate init containers if needed
-	if pod.Spec != nil && pod.Spec.InitContainers != nil {
+	// 验证 Pod 中的容器镜像
+	if err := validateContainers(containers, settings.TrustedRegistries); err != nil {
+		return kubewarden.RejectRequest(
+			kubewarden.Message(err.Error()),
+			kubewarden.NoCode)
+	}
+	// 将 []*corev1.Container 转换为 []corev1.Container
+	var initContainers []corev1.Container
+	if pod.Spec.InitContainers != nil {
 		for _, initContainer := range pod.Spec.InitContainers {
-			logger.Debug(fmt.Sprintf("Checking init container image: %s", initContainer.Image))
-			if !isImageTrusted(initContainer.Image, settings.TrustedRegistries) {
-				logger.Error(fmt.Sprintf("Init container image %s is not from a trusted registry", initContainer.Image))
-				return kubewarden.RejectRequest(
-					kubewarden.Message(
-						fmt.Sprintf("The init container image '%s' is not from a trusted registry", initContainer.Image)),
-					kubewarden.NoCode)
-			} else {
-				logger.Debug(fmt.Sprintf("Init container image %s is from a trusted registry", initContainer.Image))
-			}
+			initContainers = append(initContainers, *initContainer)
 		}
-	} else {
-		logger.Info("No init containers found in the Pod")
+	}
+	// 验证 Pod 中的初始化容器镜像
+	if err := validateContainers(initContainers, settings.TrustedRegistries); err != nil {
+		return kubewarden.RejectRequest(
+			kubewarden.Message(err.Error()),
+			kubewarden.NoCode)
 	}
 
+	// 所有验证通过，接受请求
 	return kubewarden.AcceptRequest()
 }
 
+// 解析验证请求
+func parseValidationRequest(payload []byte) (*kubewarden_protocol.ValidationRequest, error) {
+	validationRequest := &kubewarden_protocol.ValidationRequest{}
+	if err := json.Unmarshal(payload, validationRequest); err != nil {
+		logger.Error("Failed to parse validation request: " + err.Error())
+		return nil, fmt.Errorf("invalid validation request: %w", err)
+	}
+	return validationRequest, nil
+}
+
+// 解析 Pod 对象
+func parsePod(podJSON json.RawMessage) (*corev1.Pod, error) {
+	pod := &corev1.Pod{}
+	if err := json.Unmarshal([]byte(podJSON), pod); err != nil {
+		logger.Error("Failed to parse Pod object: " + err.Error())
+		return nil, fmt.Errorf("invalid Pod object: %w", err)
+	}
+	return pod, nil
+}
+
+// 验证容器镜像是否来自受信任的仓库
+func validateContainers(containers []corev1.Container, trustedRegistries mapset.Set[string]) error {
+	for _, container := range containers {
+		logger.Debug(fmt.Sprintf("Checking container image: %s", container.Image))
+		if !isImageTrusted(container.Image, trustedRegistries) {
+			logger.Error(fmt.Sprintf("Container image %s is not from a trusted registry", container.Image))
+			return fmt.Errorf("image '%s' is not from a trusted registry", container.Image)
+		}
+		logger.Debug(fmt.Sprintf("Container image %s is from a trusted registry", container.Image))
+	}
+	return nil
+}
+
+// 判断镜像是否来自受信任的仓库
 func isImageTrusted(image string, trustedRegistries mapset.Set[string]) bool {
 	for _, registry := range trustedRegistries.ToSlice() {
 		if strings.HasPrefix(image, registry) {
