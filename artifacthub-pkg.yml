@@ -7,30 +7,30 @@
 version: 0.1.4
 name: trusted registry
 displayName: Trusted Registry
-createdAt: 2024-12-26T06:29:59.872644Z
+createdAt: 2024-12-26T07:54:18.160434Z
 description: Policy is used to validate container images are from trusted registries.
 license: Apache-2.0
 homeURL: https://github.com/vvhuang-ll/kubewarden-trusted-registry
 containersImages:
 - name: policy
-  image: ghcr.io/vvhuang-ll/policies/kubewarden-trusted-registry:0.1.4
+  image: ghcr.io/vvhuang-ll/policies/kubewarden-trusted-registry:v0.1.4
 keywords:
 - pod
 - image
 - trusted registry
 links:
 - name: policy
-  url: https://github.com/vvhuang-ll/kubewarden-trusted-registry/releases/download/0.1.4/policy.wasm
+  url: https://github.com/vvhuang-ll/kubewarden-trusted-registry/releases/download/v0.1.4/policy.wasm
 - name: source
   url: https://github.com/vvhuang-ll/kubewarden-trusted-registry
 install: |
   The policy can be obtained using [`kwctl`](https://github.com/kubewarden/kwctl):
   ```console
-  kwctl pull ghcr.io/vvhuang-ll/policies/kubewarden-trusted-registry:0.1.4
+  kwctl pull ghcr.io/vvhuang-ll/policies/kubewarden-trusted-registry:v0.1.4
   ```
   Then, generate the policy manifest and tune it to your liking. For example:
   ```console
-  kwctl scaffold manifest -t ClusterAdmissionPolicy registry://ghcr.io/vvhuang-ll/policies/kubewarden-trusted-registry:0.1.4
+  kwctl scaffold manifest -t ClusterAdmissionPolicy registry://ghcr.io/vvhuang-ll/policies/kubewarden-trusted-registry:v0.1.4
   ```
 maintainers:
 - name: Kubewarden developers
