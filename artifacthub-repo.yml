@@ -1,5 +1,5 @@
 ---
-repositoryID: <THE REPOSITORY ID INSIDE OF ARTIFACTHUB> # obtained after publishing the policy for the 1st time
+repositoryID: 9e524232-ea36-4e23-b5aa-4b18043c5aab # obtained after publishing the policy for the 1st time
 owners:
-- name: YOUR NAME
-  email: <YOUR EMAIL>
+- name: vvhuang-ll
+  email: 13680846391@163.com
