@@ -1,0 +1,98 @@
+{
+  "uid": "1299d386-525b-4032-98ae-1949f69f9cfc",
+  "kind": {
+    "group": "",
+    "kind": "Pod",
+    "version": "v1"
+  },
+  "resource": {
+    "group": "",
+    "version": "v1",
+    "resource": "pods"
+  },
+  "requestKind": {
+    "group": "",
+    "version": "v1",
+    "kind": "Pod"
+  },
+  "requestResource": {
+    "group": "",
+    "version": "v1",
+    "resource": "pods"
+  },
+  "name": "nginx",
+  "namespace": "default",
+  "operation": "CREATE",
+  "userInfo": {
+    "username": "kubernetes-admin",
+    "groups": [
+      "system:masters",
+      "system:authenticated"
+    ]
+  },
+  "object": {
+    "apiVersion": "v1",
+    "kind": "Pod",
+    "metadata": {
+      "name": "test-pod",
+      "namespace": "default",
+      "labels": {
+        "cc-center": "123",
+        "owner": "team-alpha"
+      }
+    },
+    "spec": {
+      "containers": [
+        {
+          "image": "registry-dev.vestack.sbuxcf.net/nginx:latest",
+          "imagePullPolicy": "Always",
+          "name": "nginx",
+          "ports": [
+            {
+              "containerPort": 80,
+              "protocol": "TCP"
+            }
+          ],
+          "resources": {},
+          "terminationMessagePath": "/dev/termination-log",
+          "terminationMessagePolicy": "File",
+          "volumeMounts": [
+            {
+              "mountPath": "/usr/share/nginx/html",
+              "name": "shared-data"
+            },
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-cvjdp",
+              "readOnly": true
+            }
+          ]
+        },
+        {
+          "command": [
+            "sh",
+            "-c",
+            "echo Hello from BusyBox! > /data/index.html && sleep 3600"
+          ],
+          "image": "registry-stg.vestack.sbuxcf.net/busybox:1.28",
+          "imagePullPolicy": "IfNotPresent",
+          "name": "busybox",
+          "resources": {},
+          "terminationMessagePath": "/dev/termination-log",
+          "terminationMessagePolicy": "File",
+          "volumeMounts": [
+            {
+              "mountPath": "/data",
+              "name": "shared-data"
+            },
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-cvjdp",
+              "readOnly": true
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
