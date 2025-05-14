@@ -1,60 +1,44 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	mapset "github.com/deckarep/golang-set/v2"
-	corev1 "github.com/kubewarden/k8s-objects/api/core/v1"
 	kubewarden "github.com/kubewarden/policy-sdk-go"
 	kubewarden_protocol "github.com/kubewarden/policy-sdk-go/protocol"
+	"github.com/tidwall/gjson"
 )
 
 const httpBadRequestStatusCode = 400
 
 func validate(payload []byte) ([]byte, error) {
-	validationRequest, err := parseValidationRequest(payload)
+	if !gjson.ValidBytes(payload) {
+		return kubewarden.RejectRequest(
+			kubewarden.Message("invalid json payload"),
+			kubewarden.Code(httpBadRequestStatusCode))
+	}
+
+	validationRequest := gjson.ParseBytes(payload)
+	settings, err := NewSettingsFromValidationReq(&kubewarden_protocol.ValidationRequest{
+		Settings: []byte(validationRequest.Get("settings").Raw),
+	})
 	if err != nil {
 		return kubewarden.RejectRequest(
 			kubewarden.Message(err.Error()),
 			kubewarden.Code(httpBadRequestStatusCode))
 	}
 
-	settings, err := NewSettingsFromValidationReq(validationRequest)
-	if err != nil {
-		return kubewarden.RejectRequest(
-			kubewarden.Message(err.Error()),
-			kubewarden.Code(httpBadRequestStatusCode))
-	}
-
-	pod, err := parsePod(validationRequest.Request.Object)
-	if err != nil {
-		return kubewarden.RejectRequest(
-			kubewarden.Message(err.Error()),
-			kubewarden.Code(httpBadRequestStatusCode))
-	}
-
-	var containers []corev1.Container
-	if pod.Spec.Containers != nil {
-		for _, container := range pod.Spec.Containers {
-			containers = append(containers, *container)
-		}
-	}
-
+	// 获取容器列表
+	containers := getContainers(validationRequest.Get("request.object.spec.containers"))
 	if validationErr := validateContainers(containers, settings.TrustedRegistries); validationErr != nil {
 		return kubewarden.RejectRequest(
 			kubewarden.Message(validationErr.Error()),
 			kubewarden.NoCode)
 	}
 
-	var initContainers []corev1.Container
-	if pod.Spec.InitContainers != nil {
-		for _, initContainer := range pod.Spec.InitContainers {
-			initContainers = append(initContainers, *initContainer)
-		}
-	}
-
+	// 获取初始化容器列表
+	initContainers := getContainers(validationRequest.Get("request.object.spec.initContainers"))
 	if validationErr := validateContainers(initContainers, settings.TrustedRegistries); validationErr != nil {
 		return kubewarden.RejectRequest(
 			kubewarden.Message(validationErr.Error()),
@@ -64,32 +48,25 @@ func validate(payload []byte) ([]byte, error) {
 	return kubewarden.AcceptRequest()
 }
 
-func parseValidationRequest(payload []byte) (*kubewarden_protocol.ValidationRequest, error) {
-	validationRequest := &kubewarden_protocol.ValidationRequest{}
-	if err := json.Unmarshal(payload, validationRequest); err != nil {
-		logger.Error("Failed to parse validation request: " + err.Error())
-		return nil, fmt.Errorf("invalid validation request: %w", err)
-	}
-	return validationRequest, nil
-}
-
-func parsePod(podJSON json.RawMessage) (*corev1.Pod, error) {
-	pod := &corev1.Pod{}
-	if err := json.Unmarshal([]byte(podJSON), pod); err != nil {
-		logger.Error("Failed to parse Pod object: " + err.Error())
-		return nil, fmt.Errorf("invalid Pod object: %w", err)
-	}
-	return pod, nil
-}
-
-func validateContainers(containers []corev1.Container, trustedRegistries mapset.Set[string]) error {
-	for _, container := range containers {
-		logger.Debug(fmt.Sprintf("Checking container image: %s", container.Image))
-		if !isImageTrusted(container.Image, trustedRegistries) {
-			logger.Error(fmt.Sprintf("Container image %s is not from a trusted registry", container.Image))
-			return fmt.Errorf("image '%s' is not from a trusted registry", container.Image)
+func getContainers(result gjson.Result) []string {
+	var images []string
+	result.ForEach(func(_, value gjson.Result) bool {
+		if img := value.Get("image").String(); img != "" {
+			images = append(images, img)
 		}
-		logger.Debug(fmt.Sprintf("Container image %s is from a trusted registry", container.Image))
+		return true
+	})
+	return images
+}
+
+func validateContainers(containers []string, trustedRegistries mapset.Set[string]) error {
+	for _, image := range containers {
+		logger.Debug(fmt.Sprintf("Checking container image: %s", image))
+		if !isImageTrusted(image, trustedRegistries) {
+			logger.Error(fmt.Sprintf("Container image %s is not from a trusted registry", image))
+			return fmt.Errorf("image '%s' is not from a trusted registry", image)
+		}
+		logger.Debug(fmt.Sprintf("Container image %s is from a trusted registry", image))
 	}
 	return nil
 }
